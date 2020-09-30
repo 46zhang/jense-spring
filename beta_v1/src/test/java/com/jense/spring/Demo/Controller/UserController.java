@@ -7,14 +7,14 @@ import com.jense.spring.annotation.JController;
 import com.jense.spring.annotation.JRequestMapping;
 
 @JController
-@JRequestMapping("/")
+@JRequestMapping("/user")
 public class UserController {
     @JAutoWire
     public LoginService loginService;
     @JAutoWire
     public A a;
 
-    @JRequestMapping("/login")
+    @JRequestMapping("///login")
     public void login(){
         loginService.login();
     }

@@ -1,24 +1,96 @@
 package com.jense.spring;
 
-import com.jense.spring.annotation.JAutoWire;
-import com.jense.spring.annotation.JController;
-import com.jense.spring.annotation.JService;
+import com.jense.spring.annotation.*;
+
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 
 public class DispatcherServlet extends HttpServlet {
 
     private HashMap<String, Object> iocMap = new HashMap<String, Object>();
 
     private HashMap<String, Method> handleMap=new HashMap<String, Method>();
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        this.doPost(req,resp);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        try {
+            doDispatch(req,resp);
+        } catch (Exception e) {
+            e.printStackTrace();
+            resp.getWriter().write("500 Exception,Detail : " + Arrays.toString(e.getStackTrace()));
+        }
+    }
+
+    private void doDispatch(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+        String url = req.getRequestURI();
+        String contextPath = req.getContextPath();
+        url = url.replaceAll(contextPath,"").replaceAll("/+","/");
+
+        if(!this.handleMap.containsKey(url)){
+            resp.getWriter().write("404 Not Found!!!");
+            return;
+        }
+
+        Map<String,String[]> params = req.getParameterMap();
+
+        Method method = this.handleMap.get(url);
+
+
+        //获取形参列表
+        Class<?> [] parameterTypes = method.getParameterTypes();
+        Object [] paramValues = new Object[parameterTypes.length];
+
+        for (int i = 0; i < parameterTypes.length; i++) {
+            Class paramterType = parameterTypes[i];
+            if(paramterType == HttpServletRequest.class){
+                paramValues[i] = req;
+            }else if(paramterType == HttpServletResponse.class){
+                paramValues[i] = resp;
+            }else if(paramterType == String.class){
+
+                Annotation[] [] pa = method.getParameterAnnotations();
+                for (int j = 0; j < pa.length ; j ++) {
+                    for(Annotation a : pa[i]){
+                        if(a instanceof JRequestParam){
+                            String paramName = ((JRequestParam) a).value();
+                            if(!"".equals(paramName.trim())){
+                                String value = Arrays.toString(params.get(paramName))
+                                        .replaceAll("\\[|\\]","")
+                                        .replaceAll("\\s+",",");
+                                paramValues[i] = value;
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+
+
+        //暂时硬编码
+        String beanName = (method.getDeclaringClass().getSimpleName());
+        //赋值实参列表
+        method.invoke(iocMap.get(beanName),paramValues);
+
+    }
 
     @Override
     public void init(ServletConfig config) throws ServletException {
@@ -28,11 +100,12 @@ public class DispatcherServlet extends HttpServlet {
         scanPackage(basePackage);
         // 2. init ioc
         initIocMap();
-        // 3. init url-handle map
-
+        // 3. DI
+        doAutoWire();
         // 4. aop
 
-        // 5. DI
+        // 5. init url-handle map
+        initHandleMap();
     }
 
 
@@ -98,21 +171,19 @@ public class DispatcherServlet extends HttpServlet {
             try{
                 //获取public属性
                 Field[] fields = iocMap.get(s).getClass().getDeclaredFields();
+
                 for (Field field : fields) {
                     if(field.isAnnotationPresent(JAutoWire.class)){
                         JAutoWire autowired = field.getAnnotation(JAutoWire.class);
 
-                        //如果用户没有自定义beanName，默认就根据类型注入
-                        //这个地方省去了对类名首字母小写的情况的判断，这个作为课后作业
-                        //小伙伴们自己去完善
                         String beanName = autowired.value().trim();
                         if("".equals(beanName)){
                             //获得接口的类型，作为key待会拿这个key到ioc容器中去取值
                             beanName = field.getType().getName();
                         }
 
-                        //如果是public以外的修饰符，只要加了@Autowired注解，都要强制赋值
-                        //反射中叫做暴力访问， 强吻
+                        //if filed use @Autowired，but is not public
+                        //should access
                         field.setAccessible(true);
 
                         try {
@@ -130,6 +201,30 @@ public class DispatcherServlet extends HttpServlet {
     }
 
     private void initHandleMap(){
-        
+        if(iocMap.isEmpty()){
+            return ;
+        }
+        for (String s : iocMap.keySet()) {
+            String baseUrl="";
+            try{
+                Class<?> clazz=iocMap.get(s).getClass();
+
+                if(clazz.isAnnotationPresent(JController.class)){
+                    JRequestMapping requestMapping = clazz.getAnnotation(JRequestMapping.class);
+                    baseUrl = requestMapping.value();
+                    //only find the public method
+                    for(Method m:clazz.getMethods()){
+                        if(!m.isAnnotationPresent(JRequestMapping.class)){
+                            continue;
+                        }
+                        JRequestMapping methodRequestMapping=m.getAnnotation(JRequestMapping.class);
+                        String url=(baseUrl +"/"+ methodRequestMapping.value()).replaceAll("/+","/");
+                        handleMap.put(url,m);
+                    }
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
     }
 }

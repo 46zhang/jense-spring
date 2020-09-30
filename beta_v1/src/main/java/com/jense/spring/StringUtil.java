@@ -50,4 +50,8 @@ public class StringUtil {
 
         return trimmed.substring(splashIndex);
     }
+
+    public static String FormatURL(String url){
+        return url.replace("/+","/");
+    }
 }
