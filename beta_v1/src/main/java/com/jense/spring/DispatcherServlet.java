@@ -10,15 +10,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class DispatcherServlet extends HttpServlet {
+    private Properties contextConfig = new Properties();
 
     private HashMap<String, Object> iocMap = new HashMap<String, Object>();
 
@@ -83,10 +82,8 @@ public class DispatcherServlet extends HttpServlet {
 
             }
         }
-
-
         //暂时硬编码
-        String beanName = (method.getDeclaringClass().getSimpleName());
+        String beanName = (method.getDeclaringClass().getName());
         //赋值实参列表
         method.invoke(iocMap.get(beanName),paramValues);
 
@@ -94,8 +91,11 @@ public class DispatcherServlet extends HttpServlet {
 
     @Override
     public void init(ServletConfig config) throws ServletException {
+        //1、加载配置文件
+        doLoadConfig(config.getInitParameter("contextConfigLocation"));
+
         //five step
-        String basePackage = config.getInitParameter("scanPackage");
+        String basePackage = contextConfig.getProperty("scanPackage");
         // 1. scan package
         scanPackage(basePackage);
         // 2. init ioc
@@ -224,6 +224,23 @@ public class DispatcherServlet extends HttpServlet {
                 }
             }catch (Exception e){
                 e.printStackTrace();
+            }
+        }
+    }
+
+    private void doLoadConfig(String contextConfigLocation) {
+        InputStream is = this.getClass().getClassLoader().getResourceAsStream(contextConfigLocation);
+        try {
+            contextConfig.load(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }finally {
+            if(null != is){
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
