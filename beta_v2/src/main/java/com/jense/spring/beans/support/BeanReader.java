@@ -35,7 +35,7 @@ public class BeanReader {
             if (name.endsWith(".class")) {
                 registerBeanNames.add((basePackage + "." + name).replaceAll(".class",""));
             } else {
-                //is dir
+                //is dir 如果是文件夹就递归处理
                 doScan(basePackage + "." + name);
             }
         }
@@ -47,12 +47,12 @@ public class BeanReader {
             try {
                 Class<?> clazz = Class.forName(registerBeanName);
                 beanDefinitionList.add(
-                        BeanDefinition.createBeanDefinition(
+                        new BeanDefinition(
                                 lowerFirstCase(clazz.getSimpleName()),registerBeanName));
                 //接口注入
                 for(Class<?> interfaceClazz :clazz.getInterfaces()){
                     beanDefinitionList.add(
-                            BeanDefinition.createBeanDefinition(
+                            new BeanDefinition(
                                     lowerFirstCase(interfaceClazz.getSimpleName()),registerBeanName));
                 }
             } catch (Exception e) {

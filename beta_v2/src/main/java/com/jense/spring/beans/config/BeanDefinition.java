@@ -8,6 +8,16 @@ public class BeanDefinition {
     private String beanName;
     private String beanFactoryClassName;
 
+    public  BeanDefinition(){
+        
+    }
+
+    public  BeanDefinition (String beanName,String beanFactoryClassName){
+        this.setBeanName(beanName);
+        this.setBeanFactoryClassName(beanFactoryClassName);
+
+    }
+
     public String getBeanName() {
         return beanName;
     }
@@ -24,10 +34,5 @@ public class BeanDefinition {
         this.beanFactoryClassName = beanFactoryClassName;
     }
 
-    public static BeanDefinition createBeanDefinition(String beanName,String beanFactoryClassName){
-        BeanDefinition beanDefinition=new BeanDefinition();
-        beanDefinition.setBeanName(beanName);
-        beanDefinition.setBeanFactoryClassName(beanFactoryClassName);
-        return beanDefinition;
-    }
+
 }
