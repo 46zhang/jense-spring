@@ -1,4 +1,4 @@
-package com.jense.spring.beans;
+package com.jense.spring.beans.config;
 
 /**
  * 抽象化 bean 的定义，通过beanName作为bean的唯一标识
@@ -22,5 +22,12 @@ public class BeanDefinition {
 
     public void setBeanFactoryClassName(String beanFactoryClassName) {
         this.beanFactoryClassName = beanFactoryClassName;
+    }
+
+    public static BeanDefinition createBeanDefinition(String beanName,String beanFactoryClassName){
+        BeanDefinition beanDefinition=new BeanDefinition();
+        beanDefinition.setBeanName(beanName);
+        beanDefinition.setBeanFactoryClassName(beanFactoryClassName);
+        return beanDefinition;
     }
 }
