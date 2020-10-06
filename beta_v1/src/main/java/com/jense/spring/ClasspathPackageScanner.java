@@ -1,6 +1,5 @@
 package com.jense.spring;
 
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +26,7 @@ public class ClasspathPackageScanner {
     public ClasspathPackageScanner(String basePackage) {
         this.basePackage = basePackage;
         this.cl = getClass().getClassLoader();
+
     }
     public ClasspathPackageScanner(String basePackage, ClassLoader cl) {
         this.basePackage = basePackage;

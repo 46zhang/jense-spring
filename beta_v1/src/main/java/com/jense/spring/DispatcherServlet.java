@@ -187,7 +187,7 @@ public class DispatcherServlet extends HttpServlet {
                         field.setAccessible(true);
 
                         try {
-                            //用反射机制，动态给字段赋值
+                            //Use reflection mechanism to dynamically assign values ​​to fields
                             field.set(iocMap.get(s),iocMap.get(beanName));
                         } catch (IllegalAccessException e) {
                             e.printStackTrace();
