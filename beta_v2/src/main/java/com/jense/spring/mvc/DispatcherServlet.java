@@ -22,10 +22,8 @@ public class DispatcherServlet extends HttpServlet {
 
     @Override
     public void init(ServletConfig config) throws ServletException {
-        try {
-            JApplicationContext applicationContext = new JApplicationContext(config.getInitParameter("contextConfigLocation"));
-        }catch (Exception e){
-            e.printStackTrace();
-        }
+
+        JApplicationContext applicationContext = new JApplicationContext(config.getInitParameter("contextConfigLocation"));
+
     }
 }
