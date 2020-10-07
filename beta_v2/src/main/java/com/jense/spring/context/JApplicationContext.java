@@ -20,12 +20,12 @@ public class JApplicationContext {
         context = beanReader.loadBeanDefinition();
         //把bean加入到map容器缓存起来
         for (BeanDefinition beanDefinition : context) {
-            if(beanWrapperMap.containsKey(beanDefinition)){
-                throw  new Exception("bean名称有冲突");
+            if (beanWrapperMap.containsKey(beanDefinition)) {
+                throw new Exception("bean名称有冲突");
             }
             beanDefinitionMap.put(beanDefinition.getBeanFactoryClassName(), beanDefinition);
         }
-
+        //把beanWrapper加入到容器，
         for (Map.Entry<String, BeanDefinition> beanDefinitionEntry : beanDefinitionMap.entrySet()) {
             String beanName = beanDefinitionEntry.getKey();
             beanWrapperMap.put(beanName, getBean(beanName, beanDefinitionMap.get(beanName)));
@@ -36,6 +36,15 @@ public class JApplicationContext {
         if (beanWrapperMap.containsKey(beanName)) {
             return beanWrapperMap.get(beanName);
         }
-        return new BeanWrapper(beanName, beanDefinition);
+        BeanWrapper beanWrapper = null;
+        //利用反射实例化类，将类封装成beanWrapper
+        try {
+            Class<?> clazz = Class.forName(beanDefinition.getBeanFactoryClassName());
+            Object object = clazz.newInstance();
+            beanWrapper = new BeanWrapper(beanName, object);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return beanWrapper;
     }
 }
