@@ -18,6 +18,10 @@ public class JApplicationContext {
     private Map<String, BeanWrapper> beanWrapperMap = new HashMap<String, BeanWrapper>();
 
     public JApplicationContext(String... config) {
+
+        //1. 通过委派模式扫描包名，获取 beanDefinition 列表
+        //2. 将 beanDefinition 进行缓存到map
+        //3. 实例化 beanDefinition ，依赖注入实例，封装成 beanWrapper
         String scanPageName = config[0];
         BeanReader beanReader = new BeanReader(scanPageName);
         List<BeanDefinition> context = new ArrayList<BeanDefinition>();
@@ -68,7 +72,8 @@ public class JApplicationContext {
     private void doAutoWire(String beanName, BeanDefinition beanDefinition, BeanWrapper beanWrapper) {
         Object instance = beanWrapper.getWrapperInstance();
         //只对带有service注解跟controller注解的类进行依赖注入
-        if (!instance.getClass().isAnnotationPresent(JService.class) && !instance.getClass().isAnnotationPresent(JController.class)) {
+        if (!instance.getClass().isAnnotationPresent(JService.class) &&
+                !instance.getClass().isAnnotationPresent(JController.class)) {
             return;
         }
         Field[] fields = instance.getClass().getDeclaredFields();

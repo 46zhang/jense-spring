@@ -9,6 +9,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * 工具类
+ * 实现类的扫描
+ */
 public class BeanReader {
     private List<String> registerBeanNames = new ArrayList<String>();
 
@@ -17,6 +21,9 @@ public class BeanReader {
     }
 
     public BeanReader(String packageName) {
+        //1. 获取配置文件需要扫描的包名
+        //2. 扫描包名，获取beanName列表
+        //3. 封装成beanDefinition列表
         try {
             doScan(packageName);
         } catch (Exception e) {
