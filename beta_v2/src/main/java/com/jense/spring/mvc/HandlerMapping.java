@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
  * url与Method的映射类
  */
 public class HandlerMapping {
+    public Pattern getPattern;
     //不直接采用string是因为url可以支持正则 例如 /query*
     private Pattern pattern;
     private Method method;

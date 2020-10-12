@@ -17,6 +17,14 @@ public class JApplicationContext {
     private Map<String, BeanDefinition> beanDefinitionMap = new HashMap<String, BeanDefinition>();
     private Map<String, BeanWrapper> beanWrapperMap = new HashMap<String, BeanWrapper>();
 
+    public Map<String, BeanDefinition> getBeanDefinitionMap() {
+        return beanDefinitionMap;
+    }
+
+    public Map<String, BeanWrapper> getBeanWrapperMap() {
+        return beanWrapperMap;
+    }
+
     public JApplicationContext(String... config) {
 
         //1. 通过委派模式扫描包名，获取 beanDefinition 列表
