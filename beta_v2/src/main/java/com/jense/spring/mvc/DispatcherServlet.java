@@ -31,16 +31,6 @@ public class DispatcherServlet extends HttpServlet {
         doGet(req, resp);
     }
 
-    private void doDispatch(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        HandlerMapping handlerMapping = getHandlerMapping(req);
-        if (handlerMapping == null) {
-            resp.getWriter().write("404 not found");
-            return;
-        }
-
-
-    }
-
     @Override
     public void init(ServletConfig config) throws ServletException {
 
@@ -49,6 +39,25 @@ public class DispatcherServlet extends HttpServlet {
         initStrategies(applicationContext);
 
     }
+
+    private void doDispatch(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        HandlerMapping handlerMapping = getHandlerMapping(req);
+        if (handlerMapping == null) {
+            resp.getWriter().write("404 not found");
+            return;
+        }
+
+        HandlerAdapter handlerAdapter = getHandlerAdapter(handlerMapping);
+        
+
+
+    }
+
+    private HandlerAdapter getHandlerAdapter(HandlerMapping handlerMapping) {
+        return null;
+    }
+
+
 
     private void initStrategies(JApplicationContext context) {
         //初始化url-handler map
@@ -60,7 +69,7 @@ public class DispatcherServlet extends HttpServlet {
     }
 
     private void initViewResolvers(JApplicationContext context) {
-        
+
     }
 
     private void initHandlerAdapter(JApplicationContext context) {
