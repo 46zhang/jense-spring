@@ -40,16 +40,28 @@ public class DispatcherServlet extends HttpServlet {
 
     }
 
-    private void doDispatch(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    private void doDispatch(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         HandlerMapping handlerMapping = getHandlerMapping(req);
         if (handlerMapping == null) {
             resp.getWriter().write("404 not found");
             return;
         }
-
+        // 1.根据handlerMapping 获取一个适配器
         HandlerAdapter handlerAdapter = getHandlerAdapter(handlerMapping);
-        
 
+        // 2. 从适配器中获取modelAndView
+        ModelAndView modelAndView = handlerAdapter.handler(req,resp,handlerMapping);
+
+        // 3.解析modelAndView,结果可能是个页面、字符串或者对象
+        processDispatcherResult(req,resp,modelAndView);
+
+
+    }
+
+    private void processDispatcherResult(HttpServletRequest req, HttpServletResponse resp, ModelAndView modelAndView) {
+        if(null==modelAndView){
+            return ;
+        }
 
     }
 
@@ -102,7 +114,6 @@ public class DispatcherServlet extends HttpServlet {
                     }
                 }
             }
-
         }
     }
 
