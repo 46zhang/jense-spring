@@ -10,7 +10,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,12 +45,33 @@ public class DispatcherServlet extends HttpServlet {
     public void init(ServletConfig config) throws ServletException {
 
         JApplicationContext applicationContext = new JApplicationContext(config.getInitParameter("contextConfigLocation"));
-        initHandleMapping(applicationContext.getBeanWrapperMap());
+        //初始化各种mvc组件
+        initStrategies(applicationContext);
+
+    }
+
+    private void initStrategies(JApplicationContext context) {
+        //初始化url-handler map
+        initHandleMapping(context);
+        //初始化handler适配器
+        initHandlerAdapter(context);
+        //初始化视图解析器
+        initViewResolvers(context);
+    }
+
+    private void initViewResolvers(JApplicationContext context) {
+        
+    }
+
+    private void initHandlerAdapter(JApplicationContext context) {
 
     }
 
 
-    private void initHandleMapping(Map<String, BeanWrapper> beanWrapperMap) {
+    private void initHandleMapping(JApplicationContext applicationContext) {
+
+        Map<String, BeanWrapper> beanWrapperMap= applicationContext.getBeanWrapperMap();
+
         for (Map.Entry<String, BeanWrapper> entry : beanWrapperMap.entrySet()) {
 
             Object instance = entry.getValue().getWrapperInstance();
@@ -61,15 +81,14 @@ public class DispatcherServlet extends HttpServlet {
                 //写在类上的url
                 String classUrl = clazz.getAnnotation(JRequestMapping.class).value();
                 Method[] methods = clazz.getMethods();
+
                 //遍历获取写在方法注解上的url
                 for (Method method : methods) {
                     if (method.isAnnotationPresent(JRequestMapping.class)) {
                         //写在方法上的url注解
                         String methodUrl = method.getAnnotation(JRequestMapping.class).value();
-
                         //需要用正则替换写多了的'/'
                         String url = (classUrl + "/" + methodUrl).replaceAll("//", "/");
-
                         handlerMappingList.add(new HandlerMapping(Pattern.compile(url), method, instance));
                     }
                 }
@@ -83,7 +102,6 @@ public class DispatcherServlet extends HttpServlet {
         String url = req.getRequestURI();
         String contextPath = req.getContextPath();
         url = url.replaceAll(contextPath, "").replaceAll("/+", "/");
-
 
         for (HandlerMapping handlerMapping : handlerMappingList) {
             //通过正则判断url的模式是否匹配
