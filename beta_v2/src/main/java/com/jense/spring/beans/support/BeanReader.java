@@ -4,10 +4,11 @@ import com.jense.spring.beans.config.BeanDefinition;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * 工具类
@@ -15,20 +16,32 @@ import java.util.List;
  */
 public class BeanReader {
     private List<String> registerBeanNames = new ArrayList<String>();
-
+    private Properties configs = new Properties();
     public BeanReader() {
 
     }
 
-    public BeanReader(String packageName) {
+    public BeanReader(String... config) {
+
         //1. 获取配置文件需要扫描的包名
+        String scanPageName = config[0];
         //2. 扫描包名，获取beanName列表
         //3. 封装成beanDefinition列表
         try {
-            doScan(packageName);
+            doScan(scanPageName);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public Properties getConfig() {
+        InputStream inStream = this.getClass().getClassLoader().getResourceAsStream("application.properties");
+        try {
+            configs.load(inStream);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return configs;
     }
 
     private void doScan(String basePackage) throws IOException {

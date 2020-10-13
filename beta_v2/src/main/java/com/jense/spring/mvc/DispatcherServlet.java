@@ -9,9 +9,11 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -19,16 +21,31 @@ import java.util.regex.Pattern;
 
 public class DispatcherServlet extends HttpServlet {
 
-    List<HandlerMapping> handlerMappingList = new ArrayList<HandlerMapping>();
+    private List<HandlerMapping> handlerMappingList = new ArrayList<HandlerMapping>();
+    private List<ViewResolver> viewResolverList = new ArrayList<ViewResolver>();
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        super.doGet(req, resp);
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)  {
+        doPost(req, resp);
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        doGet(req, resp);
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp){
+        try {
+            doDispatch(req, resp);
+        }catch (Exception e){
+            e.printStackTrace();
+            try{
+                processDispatcherResult(req,resp,new ModelAndView("500"));
+            }catch (Exception e1){
+                e1.printStackTrace();
+                try {
+                    resp.getWriter().write("Server Error 500" + Arrays.toString( e1.getStackTrace()));
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                }
+            }
+        }
     }
 
     @Override
@@ -50,17 +67,23 @@ public class DispatcherServlet extends HttpServlet {
         HandlerAdapter handlerAdapter = getHandlerAdapter(handlerMapping);
 
         // 2. 从适配器中获取modelAndView
-        ModelAndView modelAndView = handlerAdapter.handler(req,resp,handlerMapping);
+        ModelAndView modelAndView = handlerAdapter.handler(req, resp, handlerMapping);
 
         // 3.解析modelAndView,结果可能是个页面、字符串或者对象
-        processDispatcherResult(req,resp,modelAndView);
+        processDispatcherResult(req, resp, modelAndView);
 
 
     }
 
-    private void processDispatcherResult(HttpServletRequest req, HttpServletResponse resp, ModelAndView modelAndView) {
-        if(null==modelAndView){
-            return ;
+    private void processDispatcherResult(HttpServletRequest req, HttpServletResponse resp, ModelAndView modelAndView) throws Exception {
+        if (null == modelAndView || this.viewResolverList.isEmpty()) {
+            return;
+        }
+
+        for (ViewResolver viewResolver : viewResolverList) {
+            View view = viewResolver.resolverView(modelAndView.getViewName());
+            //直接往浏览器输出
+            view.render(modelAndView.getModel(), req, resp);
         }
 
     }
@@ -68,7 +91,6 @@ public class DispatcherServlet extends HttpServlet {
     private HandlerAdapter getHandlerAdapter(HandlerMapping handlerMapping) {
         return null;
     }
-
 
 
     private void initStrategies(JApplicationContext context) {
@@ -81,7 +103,13 @@ public class DispatcherServlet extends HttpServlet {
     }
 
     private void initViewResolvers(JApplicationContext context) {
+        String templateRoot = context.getConfig().getProperty("templateRoot");
+        String templateRootPath = this.getClass().getClassLoader().getResource(templateRoot).getFile();
 
+        File templateRootDir = new File(templateRootPath);
+        for (File file : templateRootDir.listFiles()) {
+            this.viewResolverList.add(new ViewResolver(file.getName()));
+        }
     }
 
     private void initHandlerAdapter(JApplicationContext context) {
@@ -91,7 +119,7 @@ public class DispatcherServlet extends HttpServlet {
 
     private void initHandleMapping(JApplicationContext applicationContext) {
 
-        Map<String, BeanWrapper> beanWrapperMap= applicationContext.getBeanWrapperMap();
+        Map<String, BeanWrapper> beanWrapperMap = applicationContext.getBeanWrapperMap();
 
         for (Map.Entry<String, BeanWrapper> entry : beanWrapperMap.entrySet()) {
 

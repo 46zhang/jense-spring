@@ -8,15 +8,12 @@ import com.jense.spring.beans.config.BeanDefinition;
 import com.jense.spring.beans.support.BeanReader;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class JApplicationContext {
     private Map<String, BeanDefinition> beanDefinitionMap = new HashMap<String, BeanDefinition>();
     private Map<String, BeanWrapper> beanWrapperMap = new HashMap<String, BeanWrapper>();
-
+    BeanReader beanReader;
     public Map<String, BeanDefinition> getBeanDefinitionMap() {
         return beanDefinitionMap;
     }
@@ -30,8 +27,7 @@ public class JApplicationContext {
         //1. 通过委派模式扫描包名，获取 beanDefinition 列表
         //2. 将 beanDefinition 进行缓存到map
         //3. 实例化 beanDefinition ，依赖注入实例，封装成 beanWrapper
-        String scanPageName = config[0];
-        BeanReader beanReader = new BeanReader(scanPageName);
+        beanReader = new BeanReader(config);
         List<BeanDefinition> context = new ArrayList<BeanDefinition>();
         context = beanReader.loadBeanDefinition();
         //把bean加入到map容器缓存起来
@@ -105,5 +101,7 @@ public class JApplicationContext {
         }
 
     }
-
+    public Properties getConfig(){
+        return beanReader.getConfig();
+    }
 }
