@@ -20,7 +20,8 @@ import java.util.regex.Pattern;
 
 public class DispatcherServlet extends HttpServlet {
 
-    List<HandlerMapping> handlerMappingList=new ArrayList<HandlerMapping>();
+    List<HandlerMapping> handlerMappingList = new ArrayList<HandlerMapping>();
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         super.doGet(req, resp);
@@ -31,15 +32,13 @@ public class DispatcherServlet extends HttpServlet {
         doGet(req, resp);
     }
 
-    private void doDispatch(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException{
-        String url = req.getRequestURI();
-        String contextPath = req.getContextPath();
-        url = url.replaceAll(contextPath,"").replaceAll("/+","/");
-        
-        if(findUrlInHandlerMappingList(url)==null){
+    private void doDispatch(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        HandlerMapping handlerMapping = getHandlerMapping(req);
+        if (handlerMapping == null) {
             resp.getWriter().write("404 not found");
             return;
         }
+
 
     }
 
@@ -54,18 +53,24 @@ public class DispatcherServlet extends HttpServlet {
 
     private void initHandleMapping(Map<String, BeanWrapper> beanWrapperMap) {
         for (Map.Entry<String, BeanWrapper> entry : beanWrapperMap.entrySet()) {
-            Object instance= entry.getValue().getWrapperInstance();
+
+            Object instance = entry.getValue().getWrapperInstance();
             Class<?> clazz = instance.getClass();
-            if(clazz.isAnnotationPresent(JRequestMapping.class)){
+
+            if (clazz.isAnnotationPresent(JRequestMapping.class)) {
                 //写在类上的url
-                String classUrl=clazz.getAnnotation(JRequestMapping.class).value();
-                Method[] methods= clazz.getMethods();
-                for(Method method:methods){
-                    if(method.isAnnotationPresent(JRequestMapping.class)){
-                        //写在方法上的url
-                        String methodUrl=method.getAnnotation(JRequestMapping.class).value();
-                        String url= (classUrl+"/"+methodUrl).replaceAll("//","/");
-                        handlerMappingList.add(new HandlerMapping( Pattern.compile(url),method,instance));
+                String classUrl = clazz.getAnnotation(JRequestMapping.class).value();
+                Method[] methods = clazz.getMethods();
+                //遍历获取写在方法注解上的url
+                for (Method method : methods) {
+                    if (method.isAnnotationPresent(JRequestMapping.class)) {
+                        //写在方法上的url注解
+                        String methodUrl = method.getAnnotation(JRequestMapping.class).value();
+
+                        //需要用正则替换写多了的'/'
+                        String url = (classUrl + "/" + methodUrl).replaceAll("//", "/");
+
+                        handlerMappingList.add(new HandlerMapping(Pattern.compile(url), method, instance));
                     }
                 }
             }
@@ -73,10 +78,17 @@ public class DispatcherServlet extends HttpServlet {
         }
     }
 
-    private HandlerMapping findUrlInHandlerMappingList(String url){
-        for(HandlerMapping handlerMapping: handlerMappingList){
-            Matcher matcher=handlerMapping.getPattern.matcher(url);
-            if(matcher.find()){
+    private HandlerMapping getHandlerMapping(HttpServletRequest req) {
+        //获取url
+        String url = req.getRequestURI();
+        String contextPath = req.getContextPath();
+        url = url.replaceAll(contextPath, "").replaceAll("/+", "/");
+
+
+        for (HandlerMapping handlerMapping : handlerMappingList) {
+            //通过正则判断url的模式是否匹配
+            Matcher matcher = handlerMapping.getPattern.matcher(url);
+            if (matcher.find()) {
                 return handlerMapping;
             }
         }
@@ -84,3 +96,5 @@ public class DispatcherServlet extends HttpServlet {
     }
 
 }
+
+
