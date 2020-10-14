@@ -40,6 +40,7 @@ public class BeanReader {
     private void loadConfig(String[] config) {
         InputStream inStream = this.getClass().getClassLoader().getResourceAsStream(config[0]);
         try {
+            //这一步是为了测试的时候方便测试
             if(inStream==null){
                 scanPageName=config[0];
                 return;
