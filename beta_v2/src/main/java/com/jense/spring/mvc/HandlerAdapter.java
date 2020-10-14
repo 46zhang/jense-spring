@@ -6,7 +6,6 @@ import com.jense.spring.annotation.JRequestParam;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -84,7 +83,7 @@ public class HandlerAdapter {
         }
 
         //4. 返回 ModelAndView 类型的值
-        Object result = method.invoke(handlerMapping.getClass(), paramValues);
+        Object result = method.invoke(handlerMapping.getController(), paramValues);
 
         if (result == null || result == Void.class) {
             return null;

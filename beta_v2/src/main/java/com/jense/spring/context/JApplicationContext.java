@@ -13,7 +13,10 @@ import java.util.*;
 public class JApplicationContext {
     private Map<String, BeanDefinition> beanDefinitionMap = new HashMap<String, BeanDefinition>();
     private Map<String, BeanWrapper> beanWrapperMap = new HashMap<String, BeanWrapper>();
+
+
     BeanReader beanReader;
+
     public Map<String, BeanDefinition> getBeanDefinitionMap() {
         return beanDefinitionMap;
     }
@@ -33,9 +36,29 @@ public class JApplicationContext {
         //把bean加入到map容器缓存起来
         try {
             doRegisterBean(context);
+
+            doWrapperBean(context);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void doWrapperBean(List<BeanDefinition> context) throws Exception {
+        for (Map.Entry<String, BeanDefinition> beanDefinitionEntry : beanDefinitionMap.entrySet()) {
+            String beanName = beanDefinitionEntry.getKey();
+            getBean(beanName);
+        }
+        for(Map.Entry<String, BeanDefinition> beanDefinitionEntry : beanDefinitionMap.entrySet()) {
+            String beanName = beanDefinitionEntry.getKey();
+            BeanDefinition beanDefinition=beanDefinitionMap.get(beanName);
+            BeanWrapper beanWrapper=beanWrapperMap.get(beanName);
+            if(null==beanWrapper){
+                continue;
+            }
+            //依赖注入
+            doAutoWire(beanDefinition.getBeanName(), beanDefinition, beanWrapper);
+        }
+
     }
 
     private void doRegisterBean(List<BeanDefinition> context) throws Exception {
@@ -45,6 +68,7 @@ public class JApplicationContext {
                 throw new Exception("bean名称有冲突");
             }
             beanDefinitionMap.put(beanDefinition.getBeanFactoryClassName(), beanDefinition);
+            beanDefinitionMap.put(beanDefinition.getBeanName(), beanDefinition);
         }
     }
 
@@ -55,22 +79,23 @@ public class JApplicationContext {
         }
         BeanWrapper beanWrapper = null;
         BeanDefinition beanDefinition = this.beanDefinitionMap.get(beanName);
-
+        Object object = null;
         try {
             //利用反射实例化类，将对象封装成beanWrapper
             Class<?> clazz = Class.forName(beanDefinition.getBeanFactoryClassName());
-            Object object = clazz.newInstance();
-            beanWrapper = new BeanWrapper(beanName, object);
+
+            object = clazz.newInstance();
+
+            beanWrapper = new BeanWrapper(beanDefinition.getBeanName(), object);
             //保存到容器
-            this.beanWrapperMap.put(beanName, beanWrapper);
-            //依赖注入
-            doAutoWire(beanName, beanDefinition, beanWrapper);
+            this.beanWrapperMap.put(beanDefinition.getBeanName(), beanWrapper);
+//            //依赖注入
+//            doAutoWire(beanDefinition.getBeanName(), beanDefinition, beanWrapper);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-        assert beanWrapper != null;
-        return beanWrapper.getWrapperInstance();
+        return object;
     }
 
     private void doAutoWire(String beanName, BeanDefinition beanDefinition, BeanWrapper beanWrapper) {
@@ -91,9 +116,22 @@ public class JApplicationContext {
                     //否则默认取类型的值
                     name = field.getType().getName();
                 }
+
+                //暴力访问
+                field.setAccessible(true);
+
                 try {
+                    BeanWrapper autoWireInstance=beanWrapperMap.get(name);
+                    if(autoWireInstance==null){
+                        continue;
+                    }
+                    if (autoWireInstance.getAutoWireNameList().contains(instance)) {
+                        throw new Exception("循环依赖");
+                    }
                     //依赖注入
-                    field.set(instance, this.beanWrapperMap.get(name).getWrapperInstance());
+                    field.set(instance, autoWireInstance.getWrapperInstance());
+                    //注入列表+1
+                    beanWrapper.getAutoWireNameList().add(autoWireInstance.getWrapperInstance());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -101,7 +139,8 @@ public class JApplicationContext {
         }
 
     }
-    public Properties getConfig(){
+
+    public Properties getConfig() {
         return beanReader.getConfig();
     }
 }

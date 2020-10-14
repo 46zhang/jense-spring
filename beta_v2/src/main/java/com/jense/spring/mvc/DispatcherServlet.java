@@ -12,10 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,14 +20,14 @@ public class DispatcherServlet extends HttpServlet {
 
     private List<HandlerMapping> handlerMappingList = new ArrayList<HandlerMapping>();
     private List<ViewResolver> viewResolverList = new ArrayList<ViewResolver>();
-
+    private Map<HandlerMapping,HandlerAdapter> handlerAdapterMap=new HashMap<HandlerMapping, HandlerAdapter>();
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp)  {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException  {
         doPost(req, resp);
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp){
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException{
         try {
             doDispatch(req, resp);
         }catch (Exception e){
@@ -39,11 +36,7 @@ public class DispatcherServlet extends HttpServlet {
                 processDispatcherResult(req,resp,new ModelAndView("500"));
             }catch (Exception e1){
                 e1.printStackTrace();
-                try {
-                    resp.getWriter().write("Server Error 500" + Arrays.toString( e1.getStackTrace()));
-                } catch (IOException ioException) {
-                    ioException.printStackTrace();
-                }
+                resp.getWriter().write("Server Error 500" + Arrays.toString( e1.getStackTrace()));
             }
         }
     }
@@ -71,8 +64,6 @@ public class DispatcherServlet extends HttpServlet {
 
         // 3.解析modelAndView,结果可能是个页面、字符串或者对象
         processDispatcherResult(req, resp, modelAndView);
-
-
     }
 
     private void processDispatcherResult(HttpServletRequest req, HttpServletResponse resp, ModelAndView modelAndView) throws Exception {
@@ -86,10 +77,6 @@ public class DispatcherServlet extends HttpServlet {
             view.render(modelAndView.getModel(), req, resp);
         }
 
-    }
-
-    private HandlerAdapter getHandlerAdapter(HandlerMapping handlerMapping) {
-        return null;
     }
 
 
@@ -107,13 +94,15 @@ public class DispatcherServlet extends HttpServlet {
         String templateRootPath = this.getClass().getClassLoader().getResource(templateRoot).getFile();
 
         File templateRootDir = new File(templateRootPath);
-        for (File file : templateRootDir.listFiles()) {
-            this.viewResolverList.add(new ViewResolver(file.getName()));
+         for (File file : templateRootDir.listFiles()) {
+            this.viewResolverList.add(new ViewResolver(templateRoot));
         }
     }
 
     private void initHandlerAdapter(JApplicationContext context) {
-
+        for (HandlerMapping handlerMapping : handlerMappingList) {
+            handlerAdapterMap.put(handlerMapping,new HandlerAdapter());
+        }
     }
 
 
@@ -153,12 +142,17 @@ public class DispatcherServlet extends HttpServlet {
 
         for (HandlerMapping handlerMapping : handlerMappingList) {
             //通过正则判断url的模式是否匹配
-            Matcher matcher = handlerMapping.getPattern.matcher(url);
+            Matcher matcher = handlerMapping.getPattern().matcher(url);
             if (matcher.find()) {
                 return handlerMapping;
             }
         }
         return null;
+    }
+
+    private HandlerAdapter getHandlerAdapter(HandlerMapping handlerMapping) {
+        if(this.handlerMappingList.isEmpty()){return null;}
+        return this.handlerAdapterMap.get(handlerMapping);
     }
 
 }
