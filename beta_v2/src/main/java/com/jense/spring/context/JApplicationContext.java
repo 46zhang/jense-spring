@@ -118,6 +118,7 @@ public class JApplicationContext {
                 }
 
                 //暴力访问
+                //如果没有这一步无法对private 变量进行赋值
                 field.setAccessible(true);
 
                 try {
