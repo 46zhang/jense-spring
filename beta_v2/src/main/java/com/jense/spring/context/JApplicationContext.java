@@ -125,6 +125,7 @@ public class JApplicationContext {
                     if(autoWireInstance==null){
                         continue;
                     }
+                    //判断是否存在循环依赖
                     if (autoWireInstance.getAutoWireNameList().contains(instance)) {
                         throw new Exception("循环依赖");
                     }
