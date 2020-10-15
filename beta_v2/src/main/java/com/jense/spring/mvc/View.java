@@ -24,12 +24,12 @@ public class View {
             //编码
             line = new String(line.getBytes("ISO-8859-1"),"utf-8");
             //正则匹配出目标值
-            Pattern pattern = Pattern.compile("$\\{[^\\}]+\\}",Pattern.CASE_INSENSITIVE);
+            Pattern pattern = Pattern.compile("#\\{[^\\}]+\\}",Pattern.CASE_INSENSITIVE);
             Matcher matcher = pattern.matcher(line);
             while (matcher.find()){
                 String paramName = matcher.group();
                 //去掉标识字符  ${}
-                paramName = paramName.replaceAll("$\\{|\\}","");
+                paramName = paramName.replaceAll("#\\{|\\}","");
                 //替换目标值
                 Object paramValue = model.get(paramName);
                 //处理特殊字符

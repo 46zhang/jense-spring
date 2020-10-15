@@ -27,12 +27,12 @@ public class QueryController {
 
     @JRequestMapping("query.html")
     public ModelAndView query(HttpServletRequest request, HttpServletResponse response,
-                              @JRequestParam("id") String id)
+                              @JRequestParam("id") Integer id ,@JRequestParam("token") String token)
     {
         Map<String,Object> model = new HashMap<String,Object>();
         model.put("user", "Jense");
         model.put("id", id);
-        model.put("token", "123456");
+        model.put("token", token);
         return new ModelAndView("query.html",model);
     }
 

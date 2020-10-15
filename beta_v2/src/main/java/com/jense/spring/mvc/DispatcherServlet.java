@@ -75,8 +75,8 @@ public class DispatcherServlet extends HttpServlet {
             View view = viewResolver.resolverView(modelAndView.getViewName());
             //直接往浏览器输出
             view.render(modelAndView.getModel(), req, resp);
+            return;
         }
-
     }
 
 
